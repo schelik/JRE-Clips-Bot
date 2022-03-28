@@ -119,12 +119,16 @@ def main(args):
                 for chapter in chapters:
                     file.write(str(chapter.__dict__) + "\n")
 
-            convert_video_to_clips(video_path, chapters)
-            # add_square_and_image(chapters)
             try:
-                upload_chapters(chapters)
+                convert_video_to_clips(video_path, chapters)
             except:
-                print("Unable to upload chapters")
+                print("Unable to convert the video to clips!")
+            else:
+                # add_square_and_image(chapters)
+                try:
+                    upload_chapters(chapters)
+                except:
+                    print("Unable to upload chapters")
 
             delete_clips = input("Do you want to delete the clips(Y/N)?: ")
             if delete_clips == "Y":
