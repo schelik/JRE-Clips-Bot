@@ -1,0 +1,5 @@
+__pycache__/
+log.txt
+bing.txt
+.env
+Youtube_Credentials.json

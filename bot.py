@@ -4,8 +4,13 @@ import os
 import re
 import datetime
 import time
+
+from Chapter import Chapter
 from pytube import YouTube, exceptions
 from moviepy.editor import *
+from slugify import slugify
+from PIL import Image, ImageDraw
+from Youtube import upload_video
 
 
 def on_progress(stream, chunk, bytes_remaining):
@@ -18,7 +23,7 @@ def on_progress(stream, chunk, bytes_remaining):
     sys.stdout.flush()
 
 
-def find_chapters(description):
+def create_chapters(description):
     lines = description.split("\n")
     chapters = []
     for line in lines:
@@ -42,25 +47,44 @@ def find_chapters(description):
                     time_in_seconds += int(time_arr[len(time_arr) - i - 1])
                 else:
                     time_in_seconds += (60**i) * int(time_arr[len(time_arr) - i - 1])
-            chapters.append([time_in_seconds, title])
+            file_name = slugify(title)
+            video_file_name = file_name + ".mp4"
+            thumbnail_file_name = file_name + ".png"
+            chapters.append(
+                Chapter(title, video_file_name, time_in_seconds, thumbnail_file_name)
+            )
     return chapters
 
 
-def convert_video_to_clips(video_path, chapters, clips_path):
+def convert_video_to_clips(video_path, chapters):
     video_object = VideoFileClip(video_path)
     for i in range(1, len(chapters)):
         curr_chapter = chapters[i]
         bef_chapter = chapters[i - 1]
-        chapter_clip = video_object.subclip(bef_chapter[0], curr_chapter[0])
-        clip_name = bef_chapter[1] + ".mp4"
-        chapter_clip.write_videofile(clip_name)
-        clips_path.append(clip_name)
+        chapter_clip = video_object.subclip(
+            bef_chapter.start_time, curr_chapter.start_time
+        )
+        chapter_clip.write_videofile(bef_chapter.video_file_name)
+        chapter_clip.save_frame(bef_chapter.thumbnail_file_name)
 
     final_chapter = chapters[-1]
-    final_chapter_clip = video_object.subclip(final_chapter[0])
-    final_chapter_name = final_chapter[1] + ".mp4"
-    final_chapter_clip.write_videofile(final_chapter_name)
-    clips_path.append(final_chapter_name)
+    final_chapter_clip = video_object.subclip(final_chapter.start_time)
+    final_chapter_clip.write_videofile(final_chapter.video_file_name)
+    final_chapter_clip.save_frame(final_chapter.thumbnail_file_name, t=10)
+    video_object.close()
+
+
+def add_square_and_image(chapters):
+    for chapter in chapters:
+        with Image.open(chapter.thumbnail_file_name).convert("RGBA") as base:
+            draw = ImageDraw.Draw(base)
+            draw.rectangle(((350, 90), (950, 630)), outline="green", width=10)
+            base.save(chapter.thumbnail_file_name)
+
+
+def upload_chapters(chapters):
+    for chapter in chapters:
+        upload_video(chapter)
 
 
 def main(args):
@@ -75,29 +99,39 @@ def main(args):
         print("Youtube object created...")
         try:
             # pass
-            video_path = yt.streams.get_highest_resolution().download()
+            # print(yt.title)
+            video_path = yt.streams.get_highest_resolution().download(
+                filename=slugify(yt.title) + ".mp4"
+            )
         except:
             print("Unable to download the video!")
         else:
             print(f"file_path is {video_path}")
             video_description = yt.description
             # video_length = yt.length - 1  # str(datetime.timedelta(seconds=yt.length))
-            chapters = find_chapters(video_description)
-            for chapter in chapters:
-                print(chapter)
+            chapters = create_chapters(video_description)
 
             if len(chapters) == 0:
                 print("Couldn't find timestamps!")
                 return
 
-            clips_path = []
-            convert_video_to_clips(video_path, chapters, clips_path)
+            with open("log.txt", "w") as file:
+                for chapter in chapters:
+                    file.write(str(chapter.__dict__) + "\n")
 
-            delete_clips = input("Do you want to delete the clips?(Y/N): ")
+            convert_video_to_clips(video_path, chapters)
+            # add_square_and_image(chapters)
+            try:
+                upload_chapters(chapters)
+            except:
+                print("Unable to upload chapters")
+
+            delete_clips = input("Do you want to delete the clips(Y/N)?: ")
             if delete_clips == "Y":
-                print(clips_path)
-                for clip_path in clips_path:
-                    os.remove(clip_path)
+                for chapter in chapters:
+                    os.remove(chapter.video_file_name)
+                    os.remove(chapter.thumbnail_file_name)
+                # print(video_path)
                 os.remove(video_path)
 
 
