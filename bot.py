@@ -4,13 +4,15 @@ import os
 import re
 import datetime
 import time
+import json
 
 from Chapter import Chapter
 from pytube import YouTube, exceptions
 from moviepy.editor import *
 from slugify import slugify
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw    
 from Youtube import upload_video
+from bing_search import download_thumbnail_image
 
 
 def on_progress(stream, chunk, bytes_remaining):
@@ -49,7 +51,7 @@ def create_chapters(description):
                     time_in_seconds += (60**i) * int(time_arr[len(time_arr) - i - 1])
             file_name = slugify(title)
             video_file_name = file_name + ".mp4"
-            thumbnail_file_name = file_name + ".png"
+            thumbnail_file_name = file_name + "-thumbnail" + ".png"
             chapters.append(
                 Chapter(title, video_file_name, time_in_seconds, thumbnail_file_name)
             )
@@ -76,9 +78,15 @@ def convert_video_to_clips(video_path, chapters):
 
 def add_square_and_image(chapters):
     for chapter in chapters:
-        with Image.open(chapter.thumbnail_file_name).convert("RGBA") as base:
+        download_thumbnail_image(chapter)
+        thumbnail_img = Image.open(chapter.thumnail_image_file_name)
+        thumbnail_img = thumbnail_img.resize((490, 620), Image.ANTIALIAS)
+        thumnail = Image.open(chapter.thumbnail_file_name)
+        thumnail.paste(thumbnail_img, (400, 40))
+        thumnail.save(chapter.thumbnail_file_name)
+        with thumnail.convert("RGBA") as base:
             draw = ImageDraw.Draw(base)
-            draw.rectangle(((350, 90), (950, 630)), outline="green", width=10)
+            draw.rectangle(((400, 40), (900, 670)), outline=(118, 209, 79), width=15)
             base.save(chapter.thumbnail_file_name)
 
 
@@ -99,7 +107,7 @@ def main(args):
         print("Youtube object created...")
         try:
             # pass
-            # print(yt.title)
+            print("Downloading the video: " + yt.title)
             video_path = yt.streams.get_highest_resolution().download(
                 filename=slugify(yt.title) + ".mp4"
             )
@@ -115,27 +123,26 @@ def main(args):
                 print("Couldn't find timestamps!")
                 return
 
-            with open("log.txt", "w") as file:
-                for chapter in chapters:
-                    file.write(str(chapter.__dict__) + "\n")
-
             try:
                 convert_video_to_clips(video_path, chapters)
             except:
                 print("Unable to convert the video to clips!")
             else:
-                # add_square_and_image(chapters)
+                add_square_and_image(chapters)
                 try:
                     upload_chapters(chapters)
                 except:
                     print("Unable to upload chapters")
+
+            with open("log.json", "w") as file:
+                file.write(json.dumps([chapter.__dict__ for chapter in chapters]))
 
             delete_clips = input("Do you want to delete the clips(Y/N)?: ")
             if delete_clips == "Y":
                 for chapter in chapters:
                     os.remove(chapter.video_file_name)
                     os.remove(chapter.thumbnail_file_name)
-                # print(video_path)
+                    os.remove(chapter.thumnail_image_file_name)
                 os.remove(video_path)
 
 

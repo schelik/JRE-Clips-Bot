@@ -3,9 +3,11 @@ from tracemalloc import start
 
 class Chapter:
     title = ""
+    description = ""
     video_file_name = ""
-    start_time = 0
+    thumnail_image_file_name = ""
     thumbnail_file_name = ""
+    start_time = 0
 
     def __init__(self) -> None:
         pass

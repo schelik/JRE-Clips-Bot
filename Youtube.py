@@ -1,4 +1,5 @@
 import os
+import time
 
 import google_auth_oauthlib.flow
 import googleapiclient.discovery
@@ -32,7 +33,7 @@ def upload_video(chapter):
         body={
             "snippet": {
                 "categoryId": "22",
-                "description": "This is a clip.",
+                "description": chapter.description,
                 "title": chapter.title,
             },
             "status": {"privacyStatus": "private"},
@@ -42,12 +43,15 @@ def upload_video(chapter):
         media_body=MediaFileUpload(chapter.video_file_name),
     )
     response = request.execute()
-    print(response)
+    print("response: " + str(response))
+    time.sleep(100)
 
     thumbnail_request = youtube.thumbnails().set(
         # TODO: For this request to work, you must replace "YOUR_FILE"
         #       with a pointer to the actual file you are uploading.
+        videoId=response.get('id'),
         media_body=MediaFileUpload(chapter.thumbnail_file_name)
     )
     thumbnail_response = thumbnail_request.execute()
-    print(thumbnail_response)
+    print("thumbnail response: " + str(thumbnail_response))
+    time.sleep(100)
