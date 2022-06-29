@@ -9,9 +9,9 @@ Tools/Technologies: Youtube API Client & Auth, Bing search API, Azure Cognitive 
 <li>The bot checks if the provided YouTube link is valid and then downloads the video using Pytube. </li> 
 <li>It then utilizes MoviePy to cut the video into clips according to the timestamp in the video description. </li>
 <li>A Chapter object is created for every single clip. It includes title, description, thumbnail, and start time of the clip.</li>
-<li>A clip related image is downloaded using Bing Search API. Pillow creates a green square and adds the image to the clip thumbnail. </li>
-<li>Finally it uploads the clips, thumbnails, and descriptions through YouTube Data API.</li>
-<li>The bot is Dockerized and can run on any device</li>
+<li>A clip related image is downloaded using Bing Search API. Using Pillow library it creates a green square and adds the image to the clip thumbnail. </li>
+<li>Itt uploads the clips, thumbnails, and descriptions through YouTube Data API.</li>
+<li>Finally, the bot is Dockerized and can run on any device</li>
 
 <h2>Time & Effort</h2>
 The project took ~21 hours in total, within a week.
