@@ -1,7 +1,7 @@
 # JRE Clips Bot
 <p>Just provide a YouTube video link with a timestamp in the description. The bot downloads the video, cuts it into clips, and creates thumbnails for the clips. It then uploads the JRE-style clips to your YouTube channel.</p>
 
-[![Demo Video](https://img.youtube.com/vi/H2r7QgZQmu4/0.jpg)](https://www.youtube.com/watch?v=H2r7QgZQmu4)
+<!--- [![Demo Video](https://img.youtube.com/vi/H2r7QgZQmu4/0.jpg)](https://www.youtube.com/watch?v=H2r7QgZQmu4) -->
 <p>Languages/Libraries: Python, Pillow, Pytube, MoviePy, IPython <br />
 Tools/Technologies: Youtube API Client & Auth, Bing search API, Azure Cognitive Services, Docker </p>
 
